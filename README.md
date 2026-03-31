@@ -164,28 +164,67 @@ docker-compose down
 
 ---
 
-## 프로젝트 구조
+## 파일 구조 및 역할
+
+> **직접 수정하는 파일**은 `⭐`, Expo 기본 제공 파일은 `—` 로 표시
 
 ```
 ictm-frontend/
-├── app/                    # Expo Router 라우팅
-│   ├── _layout.tsx         # 루트 레이아웃 + 인증 보호
-│   ├── login.tsx           # 로그인 화면
-│   └── (app)/              # 인증된 사용자 전용 화면
-│       ├── index.tsx       # 대시보드
-│       ├── equipment.tsx   # 장비 관리
-│       ├── inspection.tsx  # 점검 목록
-│       └── report.tsx      # 리포트
-├── components/
-│   └── layout/
-│       ├── AppLayout.tsx   # 반응형 레이아웃 (데스크탑/모바일)
-│       └── Sidebar.tsx     # 사이드바 네비게이션
-├── context/
-│   └── AuthContext.tsx     # 로그인 상태 전역 관리
+│
+├── features/                        ⭐ 핵심 폴더 — 화면별 로직이 모두 여기에 있음
+│   ├── auth/
+│   │   └── AuthContext.tsx          ⭐ 로그인 상태 전역 관리 (로그인/로그아웃/토큰)
+│   ├── login/
+│   │   └── LoginScreen.tsx          ⭐ 로그인 화면 UI + 로직
+│   ├── dashboard/
+│   │   └── DashboardScreen.tsx      ⭐ 대시보드 화면 (통계 카드, 최근 점검/장비)
+│
+├── app/                             — Expo Router 진입점 (URL 경로 담당)
+│   ├── _layout.tsx                  ⭐ 앱 전체 루트 레이아웃 + 로그인 여부 체크
+│   ├── login.tsx                    — /login 경로 → LoginScreen으로 연결
+│   ├── (app)/                       — 로그인한 사용자만 접근 가능한 경로 그룹
+│   │   ├── _layout.tsx              — AppLayout 감싸는 레이아웃
+│   │   ├── index.tsx                — / 경로 → DashboardScreen으로 연결
+│   └── (tabs)/                      — Expo 초기 템플릿 잔여 파일 (사용 안 함)
+│
+├── components/                      — 재사용 가능한 UI 컴포넌트
+│   ├── layout/
+│   │   ├── AppLayout.tsx            ⭐ 반응형 레이아웃 (데스크탑: 사이드바 / 모바일: 헤더)
+│   │   └── Sidebar.tsx              ⭐ 왼쪽 사이드바 (메뉴, 유저 정보, 로그아웃)
+│   └── ui/
+│       ├── Badge.tsx                ⭐ 역할 표시 뱃지 (ADMIN / INSPECTOR)
+│       ├── Button.tsx               ⭐ 공통 버튼
+│       ├── Card.tsx                 ⭐ 카드 컨테이너 (CardHeader, CardContent 등)
+│       ├── Input.tsx                ⭐ 텍스트 입력 필드
+│       ├── collapsible.tsx          — 접기/펼치기 컴포넌트 (Expo 템플릿)
+│       └── icon-symbol.tsx          — SF Symbol 아이콘 (iOS용, Expo 템플릿)
+│
+├── constants/
+│   └── theme.ts                     ⭐ 전체 색상 테마 정의 (라이트/다크/사이드바)
+│
 ├── lib/
-│   └── api.ts              # Axios 기본 설정 (baseURL)
-└── constants/
-    └── theme.ts            # 색상 테마 (라이트/다크)
+│   └── api.ts                       ⭐ Axios 인스턴스 (백엔드 baseURL 설정)
+│
+├── hooks/                           — Expo 기본 제공 훅
+│   ├── use-color-scheme.ts          — 다크/라이트 모드 감지
+│   └── use-theme-color.ts           — 테마 색상 가져오기
+│
+├── assets/images/                   — 앱 아이콘, 스플래시 이미지
+│
+├── app.json                         — Expo 앱 설정 (이름, 아이콘, 플러그인 등)
+├── package.json                     — 의존성 목록 및 실행 스크립트
+├── tsconfig.json                    — TypeScript 설정
+└── eslint.config.js                 — ESLint 설정
+```
+
+### 새 화면을 추가할 때
+
+1. `features/새화면/새화면Screen.tsx` 생성 — 실제 UI/로직 작성
+2. `app/(app)/새화면.tsx` 생성 — 한 줄 re-export만 작성
+
+```typescript
+// app/(app)/새화면.tsx
+export { default } from "@/features/새화면/새화면Screen";
 ```
 
 ---
