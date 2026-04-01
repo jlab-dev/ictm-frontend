@@ -13,6 +13,7 @@ import { usePathname } from 'expo-router';
 import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { useAuth } from '@/features/auth/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 import { Badge } from '@/components/ui/Badge';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -34,6 +35,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [drawerOpen, setDrawerOpen] = useState(false); // 모바일 드로어(사이드바) 열림 상태
   const pathname = usePathname();                 // 현재 URL 경로 (예: '/', '/equipment')
   const { user, logout } = useAuth();              // 유저 정보와 로그아웃 함수
+  const { toggleTheme } = useTheme();             // 다크모드 토글
   const scheme = useColorScheme() ?? 'light';     // 다크/라이트 모드
   const C = Colors[scheme];                       // 현재 모드에 맞는 색상
   const S = Colors.sidebar[scheme];               // 사이드바 전용 색상
@@ -68,6 +70,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <Badge variant={user?.role === 'ADMIN' ? 'default' : 'secondary'}>
           {user?.role}
         </Badge>
+
+        {/* 다크모드 토글 */}
+        <TouchableOpacity onPress={toggleTheme} style={styles.iconBtn}>
+          <Ionicons
+            name={scheme === 'dark' ? 'sunny-outline' : 'moon-outline'}
+            size={20}
+            color={S.text}
+          />
+        </TouchableOpacity>
 
         {/* 로그아웃 버튼 */}
         <TouchableOpacity onPress={logout} style={styles.iconBtn}>
