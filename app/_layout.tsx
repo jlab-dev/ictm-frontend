@@ -14,6 +14,7 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 
 import { AuthProvider, useAuth } from '@/features/auth/AuthContext';
+import { ThemeProvider as AppThemeProvider } from '@/context/ThemeContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 // Expo Router 설정 — 앱 시작 시 기본으로 보여줄 그룹 지정
@@ -73,8 +74,10 @@ function RootLayoutNav() {
  */
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <RootLayoutNav />
-    </AuthProvider>
+    <AppThemeProvider>
+      <AuthProvider>
+        <RootLayoutNav />
+      </AuthProvider>
+    </AppThemeProvider>
   );
 }
