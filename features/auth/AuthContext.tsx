@@ -9,25 +9,26 @@
  *   const { user, login, logout } = useAuth();
  */
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
-import { createContext, useContext, useEffect, useState } from 'react';
-import api from '@/lib/api';
+import api from "@/lib/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
+import { createContext, useContext, useEffect, useState } from "react";
 
 // ─── 타입 정의 ─────────────────────────────────────────────────────
 
 /** 로그인한 사용자 정보 */
 type User = {
-  username: string; // 아이디
-  role: string;     // 역할 (ADMIN 또는 INSPECTOR)
+  loginId: string; // 아이디 (백엔드: loginId)
+  name: string; // 이름 (백엔드: name)
+  role: string; // 역할 (백엔드: ROLE_ADMIN / ROLE_INSPECTOR 등)
 };
 
 /** Context에서 제공하는 값과 함수 목록 */
 type AuthContextType = {
-  user: User | null;                                          // 현재 로그인한 유저 (로그아웃 상태면 null)
+  user: User | null; // 현재 로그인한 유저 (로그아웃 상태면 null)
   login: (username: string, password: string) => Promise<void>; // 로그인 함수
-  logout: () => Promise<void>;                               // 로그아웃 함수
-  isLoading: boolean;                                        // 앱 시작 시 토큰 복원 중 여부
+  logout: () => Promise<void>; // 로그아웃 함수
+  isLoading: boolean; // 앱 시작 시 토큰 복원 중 여부
 };
 
 // Context 객체 생성 — 초기값은 null (AuthProvider 밖에서 쓰면 에러 발생)
@@ -41,8 +42,8 @@ const AuthContext = createContext<AuthContextType | null>(null);
  */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null); // 현재 로그인 유저 상태
-  const [isLoading, setIsLoading] = useState(true);    // 토큰 복원 완료 여부
-  const router = useRouter();                           // 화면 이동에 사용
+  const [isLoading, setIsLoading] = useState(true); // 토큰 복원 완료 여부
+  const router = useRouter(); // 화면 이동에 사용
 
   /**
    * 앱이 처음 켜질 때 AsyncStorage에 저장된 토큰을 확인합니다.
@@ -50,13 +51,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    */
   useEffect(() => {
     (async () => {
-      const token    = await AsyncStorage.getItem('token');
-      const username = await AsyncStorage.getItem('username');
-      const role     = await AsyncStorage.getItem('role');
+      const token = await AsyncStorage.getItem("token");
+      const loginId = await AsyncStorage.getItem("loginId");
+      const name = await AsyncStorage.getItem("name");
+      const role = await AsyncStorage.getItem("role");
 
-      if (token && username && role) {
+      if (token && loginId && name && role) {
         // 저장된 정보가 모두 있으면 로그인 상태로 복원
-        setUser({ username, role });
+        setUser({ loginId, name, role });
       }
 
       // 복원 작업 완료 — 이후 _layout.tsx에서 화면 이동 결정
@@ -73,19 +75,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    */
   const login = async (username: string, password: string) => {
     // POST /api/v1/auth/login 요청
-    const response = await api.post('/auth/login', { username, password });
-    const { token, role } = response.data;
+    const response = await api.post("/auth/login", {
+      loginId: username,
+      password,
+    });
+    const { accessToken, loginId, name, role } = response.data.data;
 
     // AsyncStorage = 앱을 껐다 켜도 유지되는 로컬 저장소 (웹의 localStorage와 유사)
-    await AsyncStorage.setItem('token',    token);
-    await AsyncStorage.setItem('username', username);
-    await AsyncStorage.setItem('role',     role);
+    await AsyncStorage.setItem("token", accessToken);
+    await AsyncStorage.setItem("loginId", loginId);
+    await AsyncStorage.setItem("name", name);
+    await AsyncStorage.setItem("role", role);
 
     // 전역 상태 업데이트 → 앱 전체에서 user 값이 바뀜
-    setUser({ username, role });
+    setUser({ loginId, name, role });
 
     // 대시보드로 이동 (replace는 뒤로가기 시 로그인 화면으로 돌아가지 않게 함)
-    router.replace('/');
+    router.replace("/");
   };
 
   /**
@@ -96,12 +102,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    */
   const logout = async () => {
     // multiRemove = 여러 키를 한 번에 삭제
-    await AsyncStorage.multiRemove(['token', 'username', 'role']);
+    await AsyncStorage.multiRemove(["token", "loginId", "name", "role"]);
 
     // 전역 상태를 null로 → 앱 전체에서 user가 null이 됨
     setUser(null);
 
-    router.replace('/login');
+    router.replace("/login");
   };
 
   return (
@@ -118,13 +124,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
  *
  * 사용 예시:
  *   const { user, logout } = useAuth();
- *   console.log(user?.username); // "admin"
+ *   console.log(user?.loginId); // "admin01"
  */
 export function useAuth() {
   const context = useContext(AuthContext);
 
   // AuthProvider 밖에서 실수로 사용하면 명확한 에러 메시지를 보여줌
-  if (!context) throw new Error('useAuth must be used within AuthProvider');
+  if (!context) throw new Error("useAuth must be used within AuthProvider");
 
   return context;
 }

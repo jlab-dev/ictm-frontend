@@ -13,6 +13,7 @@ import { usePathname } from 'expo-router';
 import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { useAuth } from '@/features/auth/AuthContext';
+import { Badge } from '@/components/ui/Badge';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import Sidebar from './Sidebar';
@@ -22,7 +23,9 @@ const BREAKPOINT = 768;
 
 /** 경로(URL)별 페이지 제목 — 모바일 헤더에 표시됩니다 */
 const PAGE_TITLES: Record<string, string> = {
-  '/': '대시보드',
+  '/':            '대시보드',
+  '/notice':      '공지사항',
+  '/common-code': '공통코드',
 };
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -30,7 +33,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const isDesktop = width >= BREAKPOINT;          // 데스크탑 여부 판단
   const [drawerOpen, setDrawerOpen] = useState(false); // 모바일 드로어(사이드바) 열림 상태
   const pathname = usePathname();                 // 현재 URL 경로 (예: '/', '/equipment')
-  const { logout } = useAuth();                   // 로그아웃 함수
+  const { user, logout } = useAuth();              // 유저 정보와 로그아웃 함수
   const scheme = useColorScheme() ?? 'light';     // 다크/라이트 모드
   const C = Colors[scheme];                       // 현재 모드에 맞는 색상
   const S = Colors.sidebar[scheme];               // 사이드바 전용 색상
@@ -60,6 +63,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
         {/* 현재 페이지 제목 */}
         <Text style={[styles.mobileTitle, { color: S.textActive }]}>{pageTitle}</Text>
+
+        {/* 역할 뱃지 */}
+        <Badge variant={user?.role === 'ADMIN' ? 'default' : 'secondary'}>
+          {user?.role}
+        </Badge>
 
         {/* 로그아웃 버튼 */}
         <TouchableOpacity onPress={logout} style={styles.iconBtn}>
