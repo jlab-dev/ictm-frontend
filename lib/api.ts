@@ -10,6 +10,7 @@
  *   → 실제로는 http://localhost:8082/api/v1/auth/login 으로 요청이 나감
  */
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
 const api = axios.create({
@@ -21,6 +22,18 @@ const api = axios.create({
     // 요청 본문(body)을 JSON 형식으로 보내겠다고 서버에 알려주는 헤더
     'Content-Type': 'application/json',
   },
+});
+
+/**
+ * 요청 인터셉터 — 모든 요청 헤더에 JWT 토큰을 자동으로 첨부합니다.
+ * AsyncStorage에서 토큰을 읽어 Authorization: Bearer <token> 형태로 추가합니다.
+ */
+api.interceptors.request.use(async (config) => {
+  const token = await AsyncStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
 export default api;
