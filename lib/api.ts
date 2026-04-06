@@ -12,6 +12,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import { Platform } from 'react-native';
 
 const api = axios.create({
   // 모든 요청의 기본 주소 — 백엔드 서버 주소
@@ -26,10 +27,12 @@ const api = axios.create({
 
 /**
  * 요청 인터셉터 — 모든 요청 헤더에 JWT 토큰을 자동으로 첨부합니다.
- * AsyncStorage에서 토큰을 읽어 Authorization: Bearer <token> 형태로 추가합니다.
+ * 웹: localStorage, 앱: AsyncStorage에서 토큰을 읽어 Authorization: Bearer <token> 형태로 추가합니다.
  */
 api.interceptors.request.use(async (config) => {
-  const token = await AsyncStorage.getItem('token');
+  const token = Platform.OS === 'web'
+    ? localStorage.getItem('token')
+    : await AsyncStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
